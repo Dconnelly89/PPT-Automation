@@ -1,0 +1,72 @@
+name: ppt-automation-local
+
+services:
+  api:
+    build:
+      context: ./api
+    environment:
+      PORT: "8000"
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./api:/app
+
+  worker:
+    build:
+      context: ./worker
+    environment:
+      INTERVAL_SECONDS: "5"
+    depends_on:
+      - api
+      - memory
+    volumes:
+      - ./worker:/app
+
+  web:
+    build:
+      context: ./web
+    environment:
+      PORT: "3000"
+      API_BASE_URL: "http://api:8000"
+    depends_on:
+      - api
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./web:/app
+
+  automation-bridge:
+    build:
+      context: ./automation-bridge
+    environment:
+      PORT: "8003"
+    depends_on:
+      - api
+      - worker
+    ports:
+      - "8003:8003"
+    volumes:
+      - ./automation-bridge:/app
+
+  memory:
+    build:
+      context: ./memory
+    environment:
+      PORT: "8004"
+    ports:
+      - "8004:8004"
+    volumes:
+      - ./memory:/app
+
+  voice-gateway:
+    build:
+      context: ./voice-gateway
+    environment:
+      PORT: "8005"
+      AUTOMATION_BRIDGE_URL: "http://automation-bridge:8003"
+    depends_on:
+      - automation-bridge
+    ports:
+      - "8005:8005"
+    volumes:
+      - ./voice-gateway:/app
